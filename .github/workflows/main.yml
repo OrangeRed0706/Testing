@@ -1,0 +1,33 @@
+name: .NET Build
+
+on:
+  push:
+    branches:
+      - main  # 替换为你的默认分支
+  pull_request:
+    branches:
+      - main  # 替换为你的默认分支
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '6.0'  # 替换为你需要的 .NET 版本
+
+    - name: Build and publish
+      run: dotnet publish -c Release -o ./publish
+
+    - name: Build Docker image
+      uses: docker/build-push-action@v2
+      with:
+        context: ./
+        push: true
+        tags: your-docker-repository/image-name:${{ github.sha }}
+
