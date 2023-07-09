@@ -1,4 +1,4 @@
-name: .NET Build & Test
+name: build and push to docker hub
 
 on:
   push:
@@ -32,5 +32,5 @@ jobs:
 
     - name: Build Docker image and Push to Docker Hub
       run: |
-        docker build --build-arg proj=HelloWorld -t HelloWorld .
-        docker push lynn0706/HelloWorld:latest:latest
+        docker build --build-arg proj=HelloWorld -t helloworld .
+        docker push lynn0706/helloworld:latest:latest
