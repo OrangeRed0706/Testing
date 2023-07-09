@@ -33,4 +33,4 @@ jobs:
     - name: Build Docker image and Push to Docker Hub
       run: |
         docker build --build-arg proj=HelloWorld -t helloworld .
-        docker push lynn0706/helloworld:latest:latest
+        docker push lynn0706/helloworld:latest
