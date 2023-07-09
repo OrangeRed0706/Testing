@@ -1,23 +1,41 @@
-# 使用 .NET 6.0 SDK 作为构建阶段的基础镜像
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+FROM lynn0706/dotnet-sdk:latest AS build
 
-# 设定工作目录
-WORKDIR /src
+WORKDIR /app
 
-# 复制所有的项目文件并恢复
 COPY . .
 RUN dotnet restore
+RUN dotnet build -c Release -o out
+RUN dotnet publish HelloWorld/HelloWorld.csproj -c Release -o out /p:GenerateDocumentationFile=true
 
-# 编译所有的项目
-RUN dotnet build -c Release -o /app/build
-
-FROM build AS publish
-RUN dotnet publish -c Release -o /app/publish
-
-# 使用 .NET 6.0 Runtime 作为运行阶段的基础镜像
-FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS runtime
+FROM lynn0706/dotnet-runtime:latest AS runtime
 WORKDIR /app
-COPY --from=publish /app/publish .
+ARG proj
+ENV dll="/app/HelloWorld.dll"
+# ENV dll="/app/${proj}.dll"
 
-# 指定运行时的启动命令
-ENTRYPOINT ["dotnet", "HelloWorld.dll"]
+COPY --from=build /app/out ./
+
+RUN export COMPlus_PerfMapEnabled=1 \
+&& export COMPlus_EnableEventLog=1
+
+# COPY ./sedappsettings.sh ./
+COPY dotnet.conf /etc/supervisor.d/dotnet.ini
+# COPY ./sed.conf /etc/supervisor.d/sed.ini
+# RUN chmod +x /app/sedappsettings.sh
+
+#Support container restart can sed the latest environment data
+# RUN cp /app/appsettings.json /app/appsettings.json.orign \
+# && cp /app/appsettings.Integration.json /app/appsettings.Integration.json.orign \
+# && cp /app/appsettings.Qat.json /app/appsettings.Qat.json.orign \
+# && cp /app/appsettings.Staging.json /app/appsettings.Staging.json.orign \
+# && cp /app/appsettings.Production.json /app/appsettings.Production.json.orign
+# Expose the port your app runs on
+ENV PORT=64132
+EXPOSE $PORT
+
+# Define the urls environment variable
+ENV URLS=http://*:$PORT
+
+ENTRYPOINT dotnet ${dll} --urls ${URLS}
+#Use supervisord controll container process
+# CMD ["supervisord", "-n"]
